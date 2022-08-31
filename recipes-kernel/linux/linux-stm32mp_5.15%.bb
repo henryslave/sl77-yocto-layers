@@ -11,6 +11,10 @@ unset KBUILD_DEFCONFIG
 
 #### CUSTOM_DEVICETREE = "my-custom-devicetree-file.dts"
 
+SRC_URI += "\ 
+    file://fragment-10-can.config \
+    "
+
 #### SRC_URI += "\ 
 ####    file://${CUSTOM_DEVICETREE} \
 ####    file://custom-display.patch \
