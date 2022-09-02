@@ -11,9 +11,12 @@ unset KBUILD_DEFCONFIG
 
 #### CUSTOM_DEVICETREE = "my-custom-devicetree-file.dts"
 
-SRC_URI += "\ 
-    file://fragment-10-can.config \
-    "
+KERNEL_CONFIG_FRAGMENTS += "${WORKDIR}/fragments/${LINUX_VERSION}/fragment-10-can.config"
+
+SRC_URI += "file://${LINUX_VERSION}/fragment-10-can.config;subdir=fragments"
+
+# Don't forget to add/del for devupstream
+SRC_URI:class-devupstream += "file://${LINUX_VERSION}/fragment-10-can.config;subdir=fragments"
 
 #### SRC_URI += "\ 
 ####    file://${CUSTOM_DEVICETREE} \
