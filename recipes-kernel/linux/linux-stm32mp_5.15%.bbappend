@@ -24,6 +24,6 @@ SRC_URI += "file://${LINUX_VERSION}/${CUSTOM_DEVICETREE}"
 SRC_URI:class-devupstream += "file://${LINUX_VERSION}/fragment-10-can.config;subdir=fragments"
 
 do_configure:append() {
-    cp ${WORKDIR}/${LINUX_VERSION}/${CUSTOM_DEVICETREE} ${S}/arch/arm/boot/dts
+    cp ${WORKDIR}/${LINUX_VERSION}/${CUSTOM_DEVICETREE} ${S}/arch/arm/boot/dts/stm32mp157c-dk2.dts
 }
  
