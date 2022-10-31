@@ -33,11 +33,13 @@
 	model = "STMicroelectronics STM32MP157C-DK2 STM32CubeMX board - openstlinux-5.15-yocto-kirkstone-mp1-v22.06.15";
 	compatible = "st,stm32mp157c-sl77-fw-demo-mx", "st,stm32mp157";
 
-	aliases {
+	/* USER CODE BEGIN root */
+
+	aliases{
 		serial3 = &usart2;
 	};
 
-	chosen {
+	chosen{
 		#address-cells = <1>;
 		#size-cells = <1>;
 		ranges;
@@ -50,7 +52,7 @@
 		};
 	};
 
-	wifi_pwrseq: wifi-pwrseq {
+	wifi_pwrseq:wifi-pwrseq{
 		compatible = "mmc-pwrseq-simple";
 		reset-gpios = <&gpioh 4 GPIO_ACTIVE_LOW>;
 	};
@@ -72,7 +74,20 @@
 }; /*root*/
 
 &pinctrl {
-	u-boot,dm-pre-reloc;
+
+	adc_pins_mx: adc_mx-0 {
+		pins {
+			pinmux = <STM32_PINMUX('A', 4, ANALOG)>, /* ADC1_INP18 */
+					 <STM32_PINMUX('A', 5, ANALOG)>; /* ADC1_INP19 */
+		};
+	};
+
+	adc_sleep_pins_mx: adc_sleep_mx-0 {
+		pins {
+			pinmux = <STM32_PINMUX('A', 4, ANALOG)>, /* ADC1_INP18 */
+					 <STM32_PINMUX('A', 5, ANALOG)>; /* ADC1_INP19 */
+		};
+	};
 
 	eth1_pins_mx: eth1_mx-0 {
 		pins1 {
@@ -125,7 +140,6 @@
 		};
 	};
 
-#ifdef CONFIG_FDCAN1_ON
 	fdcan1_pins_mx: fdcan1_mx-0 {
 		pins1 {
 			pinmux = <STM32_PINMUX('A', 11, AF9)>; /* FDCAN1_RX */
@@ -135,7 +149,7 @@
 			pinmux = <STM32_PINMUX('A', 12, AF9)>; /* FDCAN1_TX */
 			bias-disable;
 			drive-push-pull;
-			slew-rate = <1>;
+			slew-rate = <0>;
 		};
 	};
 
@@ -145,7 +159,6 @@
 					 <STM32_PINMUX('A', 12, ANALOG)>; /* FDCAN1_TX */
 		};
 	};
-#endif
 
 	hdmi_cec_pins_mx: hdmi_cec_mx-0 {
 		pins {
@@ -203,13 +216,6 @@
 			pinmux = <STM32_PINMUX('A', 4, ANALOG)>, /* ADC1_INP18 */
 					 <STM32_PINMUX('A', 5, ANALOG)>, /* ADC1_INP19 */
 					 <STM32_PINMUX('F', 12, ANALOG)>; /* ADC1_INP6 */
-		};
-	};
-
-	m4_fdcan1_pins_mx: m4_fdcan1_mx-0 {
-		pins {
-			pinmux = <STM32_PINMUX('A', 11, RSVD)>, /* FDCAN1_RX */
-					 <STM32_PINMUX('A', 12, RSVD)>; /* FDCAN1_TX */
 		};
 	};
 
@@ -544,7 +550,8 @@
 	status = "okay";
 
 	/* USER CODE BEGIN m4_rproc */
-	memory-region = <&retram>, <&mcuram>, <&mcuram2>, <&vdev0vring0>, <&vdev0vring1>, <&vdev0buffer>;
+	memory-region = <&retram>, <&mcuram>, <&mcuram2>, <&vdev0vring0>, 
+	                <&vdev0vring1>, <&vdev0buffer>;
 	interrupt-parent = <&exti>;
 	interrupts = <68 1>;
 	wakeup-source;
@@ -570,15 +577,6 @@
 			clocks = <&rcc DMA2>;
 			status = "disabled";
 		};
-		/*
-		m4_m_can1: can@4400e000 {
-			compatible = "rproc-srm-dev";
-			reg = <0x4400e000 0x400>, <0x44011000 0x2800>;
-			clocks = <&scmi0_clk CK_SCMI0_HSE>, <&rcc FDCAN_K>;
-			clock-names = "hclk", "cclk";
-			status = "disabled";
-		};
-		*/
 		m4_timers1: timer@44000000 {
 			compatible = "rproc-srm-dev";
 			reg = <0x44000000 0x400>;
@@ -628,8 +626,11 @@
 	/* USER CODE END crc1 */
 };
 
-&cryp1 {
+&cryp1{
 	status = "okay";
+
+	/* USER CODE BEGIN cryp1 */
+	/* USER CODE END cryp1 */
 };
 
 &dma1{
@@ -865,17 +866,6 @@
 				regulator-initial-mode = <0>;
 			};
 
-/*
-			v5v0:buck5{
-				regulator-name = "v5v0";
-				regulator-min-microvolt = <5000000>;
-				regulator-max-microvolt = <5000000>;
-				regulator-always-on;
-				regulator-over-current-protection;
-				regulator-initial-mode = <0>;
-			};
-*/
-
 			v1v8_audio:ldo1{
 				regulator-name = "v1v8_audio";
 				regulator-min-microvolt = <1800000>;
@@ -902,10 +892,7 @@
 
 			vdd_usb:ldo4{
 				regulator-name = "vdd_usb";
-				regulator-min-microvolt = <3300000>;
-				regulator-max-microvolt = <3300000>;
 				interrupts = <IT_CURLIM_LDO4 0>;
-				regulator-always-on;
 			};
 
 			vdda:ldo5{
@@ -927,7 +914,6 @@
 			vref_ddr:vref_ddr{
 				regulator-name = "vref_ddr";
 				regulator-always-on;
-				regulator-over-current-protection;
 			};
 
 			bst_out:boost{
@@ -999,28 +985,30 @@
 	/* USER CODE END iwdg2 */
 };
 
-&ltdc {
+&ltdc{
 	status = "okay";
 
-	port {
-		ltdc_ep1_out: endpoint@1 {
+	/* USER CODE BEGIN ltdc */
+
+	port{
+
+		ltdc_ep1_out:endpoint@1{
 			reg = <1>;
 			remote-endpoint = <&dsi_in>;
 		};
 	};
+	/* USER CODE END ltdc */
 };
 
-#ifdef CONFIG_FDCAN1_ON
 &m_can1{
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&fdcan1_pins_mx>;
-	pinctrl-1 = <&fdcan1_sleep_pins_mx> /* RESTORE!!! ; */
+	pinctrl-1 = <&fdcan1_sleep_pins_mx>;
 	status = "okay";
 
 	/* USER CODE BEGIN m_can1 */
 	/* USER CODE END m_can1 */
 };
-#endif
 
 &m4_adc{
 	pinctrl-names = "default";
@@ -1036,15 +1024,6 @@
 
 	/* USER CODE BEGIN m4_dma2 */
 	/* USER CODE END m4_dma2 */
-};
-
-&m4_m_can1{
-	pinctrl-names = "default";
-	pinctrl-0 = <&m4_fdcan1_pins_mx>;
-	status = "okay";
-
-	/* USER CODE BEGIN m4_m_can1 */
-	/* USER CODE END m4_m_can1 */
 };
 
 &m4_timers1{
@@ -1221,7 +1200,6 @@
 	pinctrl-0 = <&spi5_pins_mx>;
 	pinctrl-1 = <&spi5_sleep_pins_mx>;
 	cs-gpios = <&gpiof 6 0>;
-//	spi-max-frequency = <10000000>;
 	status = "okay";
 
 	/* USER CODE BEGIN spi5 */
