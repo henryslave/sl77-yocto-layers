@@ -16,12 +16,13 @@
 #include "stm32mp15xc.dtsi"
 #include "stm32mp15-pinctrl.dtsi"
 #include "stm32mp15xxac-pinctrl.dtsi"
+#include "stm32mp15-m4-srm.dtsi"
 #include "stm32mp15xx-dkx.dtsi"
 
 /* USER CODE BEGIN includes */
+#include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/mfd/st,stpmic1.h>
 #include <dt-bindings/rtc/rtc-stm32.h>
-
 /* USER CODE END includes */
 
 /* USER CODE BEGIN defines */
@@ -113,6 +114,26 @@
 		serial3 = &usart2;
 	};
 
+	led{
+		compatible = "gpio-leds";
+
+		led-blue{
+			label = "heartbeat";
+			gpios = <&gpiod 11 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			default-state = "off";
+		};
+	};
+
+	sound:sound{
+		compatible = "audio-graph-card";
+		label = "STM32MP15-DK";
+		routing = "Playback", "MCLK",
+				"Capture", "MCLK",
+				"MICL", "Mic Bias";
+		dais = <&sai2a_port &sai2b_port &i2s2_port>;
+		status = "okay";
+	};
 
 	vin:vin{
 		compatible = "regulator-fixed";
@@ -292,14 +313,6 @@
 		pins {
 			pinmux = <STM32_PINMUX('E', 7, RSVD)>, /* UART7_RX */
 			         <STM32_PINMUX('E', 8, RSVD)>; /* UART7_TX */
-		};
-	};
-
-	m4_adc_pins_mx: m4_adc_mx-0 {
-		pins {
-			pinmux = <STM32_PINMUX('A', 4, ANALOG)>, /* ADC1_INP18 */
-					 <STM32_PINMUX('A', 5, ANALOG)>, /* ADC1_INP19 */
-					 <STM32_PINMUX('F', 12, ANALOG)>; /* ADC1_INP6 */
 		};
 	};
 
@@ -626,13 +639,6 @@
 		status = "okay";
 
 		/* USER CODE BEGIN m4_system_resources */
-		m4_adc: adc@48003000 {
-			compatible = "rproc-srm-dev";
-			reg = <0x48003000 0x400>;
-			clocks = <&rcc ADC12>, <&rcc ADC12_K>;
-			clock-names = "bus", "adc";
-			status = "disabled";
-		};
 		m4_dma2: dma@48001000 {
 			compatible = "rproc-srm-dev";
 			reg = <0x48001000 0x400>;
@@ -662,6 +668,31 @@
 		};
 		/* USER CODE END m4_system_resources */
 	};
+};
+
+&adc{
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&adc_pins_mx>;
+	pinctrl-1 = <&adc_sleep_pins_mx>;
+	status = "okay";
+
+	/* USER CODE BEGIN adc */
+	vdd-supply = <&vdd>;
+	vdda-supply = <&vdd>;
+	vref-supply = <&vrefbuf>;
+
+	adc1:adc@0{
+		st,min-sample-time-nsecs = <5000>;
+		st,adc-channels = <18 19>;
+		status = "okay";
+	};
+
+	adc2:adc@100{
+		st,adc-channels = <18 19>;
+		st,min-sample-time-nsecs = <5000>;
+		status = "okay";
+	};
+	/* USER CODE END adc */
 };
 
 &bsec{
@@ -721,38 +752,45 @@
 	/* USER CODE END dmamux1 */
 };
 
-&dsi {
+&dsi{
 	status = "okay";
 
-	ports {
-		port@0 {
+	/* USER CODE BEGIN dsi */
+
+	ports{
+
+		port@0{
 			reg = <0>;
-			dsi_in: endpoint {
+
+			dsi_in:endpoint{
 				remote-endpoint = <&ltdc_ep1_out>;
 			};
 		};
 
-		port@1 {
+		port@1{
 			reg = <1>;
-			dsi_out: endpoint {
+
+			dsi_out:endpoint{
 				remote-endpoint = <&panel_in>;
 			};
 		};
 	};
 
-	panel_otm8009a: panel-otm8009a@0 {
+	panel_otm8009a:panel-otm8009a@0{
 		compatible = "orisetech,otm8009a";
 		reg = <0>;
 		reset-gpios = <&gpioe 4 GPIO_ACTIVE_LOW>;
 		power-supply = <&v3v3>;
 		status = "okay";
 
-		port {
-			panel_in: endpoint {
+		port{
+
+			panel_in:endpoint{
 				remote-endpoint = <&dsi_out>;
 			};
 		};
 	};
+	/* USER CODE END dsi */
 };
 
 &dts{
@@ -1067,15 +1105,6 @@
 
 	/* USER CODE BEGIN m_can1 */
 	/* USER CODE END m_can1 */
-};
-
-&m4_adc{
-	pinctrl-names = "default";
-	pinctrl-0 = <&m4_adc_pins_mx>;
-	status = "okay";
-
-	/* USER CODE BEGIN m4_adc */
-	/* USER CODE END m4_adc */
 };
 
 &m4_dma2{
@@ -1436,22 +1465,6 @@
 };
 
 &pinctrl{
-
-	m4_i2c5_pins_a: m4-i2c5-0 {
-		pins {
-			pinmux = <STM32_PINMUX('A', 11, RSVD)>, /* I2C5_SCL */
-				 <STM32_PINMUX('A', 12, RSVD)>; /* I2C5_SDA */
-		};
-	};
-
-	m4_spi4_pins_a: m4-spi4-0 {
-		pins {
-			pinmux = <STM32_PINMUX('E', 12, RSVD)>, /* SPI4_SCK */
-				 <STM32_PINMUX('E', 14, RSVD)>, /* SPI4_MOSI */
-				 <STM32_PINMUX('E', 13, RSVD)>; /* SPI4_MISO */
-		};
-	};
-
 	stusb1600_pins_a:stusb1600-0{
 
 		pins{
